@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+	<meta charset="UTF-8">
+	<title>Test Chat</title>
+	<script src="/javascripts/jquery-1.10.2.min.js"></script>
+	<script src="/socket.io/socket.io.js"></script>
+	<script>
+		var socket = io.connect('http://localhost:3000');
+
+		socket.on('message', function(data){
+				//alert(423804);
+				var mode = data.mode;
+				//alert(mode);
+				switch(mode){
+					case "subscribe":
+						$(".myid").text(data.id);
+						break;
+					case "post":
+						putline(data.text);
+						break;
+					case "info":
+						putinfo(data.text);
+						break;
+				}
+		});
+		function puts(str){
+			var element = document.createElement("div");
+			element.innerHTML = str;
+			var object = document.getElementById("posts");
+			//object.appendChild(element);
+			object.insertBefore(element, object.firstChild);
+			//親ノード.insertBefore(追加するノード, 親ノード.firstChild);
+		}
+		function post(){
+			if($(".name").val() == ""){
+				alert("名前を入力してね！");
+			} else {
+				socket.emit('post', {mode: "post", text: $(".name").val() + ":" + $(".inputbox").val()});
+				$(".inputbox").val("");
+			}
+		}
+		function putline(str){
+			puts(str);
+		}
+		function putinfo(str){
+			puts(str);
+		}
+
+		$(function(){
+			socket.emit('post', {mode: "subscribe"});
+			socket.emit('post', {mode: "getlog"});
+		//	$(".myid").text(1);
+		});
+	</script>
+</head>
+<body>
+	<h1>Test Chat</h1>
+	<h3>my id:<span class="myid">-</span></h3>
+	<form id="form" action="">
+		Name:<input type="text" class="name">
+		<input type="text" class="inputbox">
+		<input type="button" value="post" onclick="post();">
+	</form>
+	<div id="posts"></div>
+</body>
+</html>
