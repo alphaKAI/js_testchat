@@ -59,9 +59,12 @@ io.sockets.on('connection', function(socket){
 				active += 1;
 				break;
 			case "post":
-				log.push(stringcrettime(data.text));//Add to log	
+				str = stringcrettime(data.text);
+				log.push(str);//Add to log	
+		    var address = socket.handshake.address;
+				console.log(address.address + " : " + str);
 				if(log[log.length - 2] != data.text){
-					io.sockets.emit('message', {mode: "post", text: stringcrettime(data.text)});
+					io.sockets.emit('message', {mode: "post", text: str});
 				}
 				break;
 			case "getlog":
