@@ -1,8 +1,7 @@
-body {
-  padding: 50px;
-  font: 14px "Lucida Grande", Helvetica, Arial, sans-serif;
-}
-
-a {
-  color: #00B7FF;
+#posts > div{
+	margin:5px;
+	padding-left:5px;
+	color:#fff;
+	background-color: #0593e2;
+	border-radius: 5px;
 }

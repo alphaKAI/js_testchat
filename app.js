@@ -35,44 +35,93 @@ var server = http.createServer(app).listen(app.get('port'), function(){
 });
 
 var io = require('socket.io').listen(server);
+//Define Functions
 function getnow(){
 	now = new Date();
 	hours = now.getHours();
 	minutes = now.getMinutes();
 	seconds = now.getSeconds();
-	return hours + ":" + minutes + ":" + seconds
+	return hours + ":" + minutes + ":" + seconds;
 }
 function stringcrettime(str){
-	return str + "            - " +getnow()
+	return str + "            - " +getnow();
 }
+function deleteFromArray(ary, pattarn){
+	for(var i = 0; i < ary.length; i++){
+		if(ary[i] == pattarn){
+			ary.splice(i,1);
+		}
+	}
+	return ary;
+}
+//=================
+//Define variables
 var log = new Array;
 var active = 0;
-var user = new Array;
+var users = new Array;
 var i = 0;
+var counter = 0;
+//=================
+
 io.sockets.on('connection', function(socket){
+	var address = socket.handshake.address;
+	users.push(address.address);
+	counter++;
+	console.log("New Connection : " + address.address);
 	socket.on('post', function(data){
-		var str = data.mode;
+		var str = data.method;
+		if(data.uid) var uid = data.uid;
+
 		switch(str){
 			case "subscribe":
-				io.sockets.emit('message', {mode: "info", text: stringcrettime("ようこそ！")});
-				io.sockets.emit('message', {mode: "subscribe", id: active + 1});
+				io.sockets.emit('message', {
+					method: "info",
+					text:   stringcrettime("ようこそ！"),
+					uid: uid
+				});
+				io.sockets.emit('message', {
+					method: "subscribe",
+					id: active + 1,
+					uid: uid
+				});
+				io.sockets.emit('message', {
+					method: "new",
+					id: active + 1,
+					counter: counter
+				});
 				active += 1;
 				break;
 			case "post":
 				str = stringcrettime(data.text);
-				log.push(str);//Add to log	
-		    var address = socket.handshake.address;
+				log.push(str);
 				console.log(address.address + " : " + str);
-				if(log[log.length - 2] != data.text){
-					io.sockets.emit('message', {mode: "post", text: str});
+				if(log[log.length - 2] != data.text) {
+					io.sockets.emit('message', {
+						method: "post",
+						text: str,
+						uid: uid
+					});
 				}
 				break;
 			case "getlog":
 				for(var i = 0; i < log.length; i++){
-					io.sockets.emit('message', {mode: "post", text:log[i]});
+					io.sockets.emit('message', {
+						method: "log",
+						text:log[i],
+						uid: uid
+					});
 				}
 				break;
 		}
+	});
+	socket.on('disconnect', function (){
+		counter--;
+		console.log("disconnect:" + address.address);
+		users = deleteFromArray(users, address.address);
+		io.sockets.emit('message', {
+			method:"disconnect",
+			counter: counter
+		});
 	});
 });
 app.get('/', function(req, res){

@@ -5,22 +5,51 @@
 	<title>Test Chat</title>
 	<script src="/javascripts/jquery-1.10.2.min.js"></script>
 	<script src="/socket.io/socket.io.js"></script>
+	<link rel="stylesheet" href="/stylesheets/style.css" />
 	<script>
 		var socket = io.connect('http://localhost:3000');
 
+		$(function(){
+			var ary = new Array;
+			for(var i = 0; i < 30; i++){
+				ary.push((Math.random() * 9 + 1).toString().slice(0,1));
+			}
+			uid = ary.join("");
+			$(".myid").text("");
+			socket.emit('post', {
+				method: "subscribe",
+				uid: uid
+			});
+			socket.emit('post', {
+				method: "getlog",
+				uid:uid
+			});
+		});
+
 		socket.on('message', function(data){
-				//alert(423804);
-				var mode = data.mode;
-				//alert(mode);
-				switch(mode){
+				var method = data.method;
+				switch(method){
 					case "subscribe":
-						$(".myid").text(data.id);
+						if(data.uid == uid) $(".myid").text(data.id);
 						break;
 					case "post":
 						putline(data.text);
 						break;
 					case "info":
-						putinfo(data.text);
+						if(data.uid == uid) putinfo(data.text);
+						break;
+					case "log":
+						if(data.uid == uid) putline(data.text);
+						break;
+					case "new":
+						var str = data.id + "人目の人が入室しました！ いらっしゃい！";
+						puts(str);
+						$(".active").text(data.counter);
+						break;
+					case "disconnect":
+						var str = "1人退室しました";
+						puts(str);
+						$(".active").text(data.counter);
 						break;
 				}
 		});
@@ -28,15 +57,17 @@
 			var element = document.createElement("div");
 			element.innerHTML = str;
 			var object = document.getElementById("posts");
-			//object.appendChild(element);
 			object.insertBefore(element, object.firstChild);
-			//親ノード.insertBefore(追加するノード, 親ノード.firstChild);
 		}
 		function post(){
 			if($(".name").val() == ""){
 				alert("名前を入力してね！");
 			} else {
-				socket.emit('post', {mode: "post", text: $(".name").val() + ":" + $(".inputbox").val()});
+				socket.emit('post', {
+					method: "post",
+					text: $(".name").val() + ":" + $(".inputbox").val(),
+					uid:uid
+				});
 				$(".inputbox").val("");
 			}
 		}
@@ -46,17 +77,11 @@
 		function putinfo(str){
 			puts(str);
 		}
-
-		$(function(){
-			socket.emit('post', {mode: "subscribe"});
-			socket.emit('post', {mode: "getlog"});
-		//	$(".myid").text(1);
-		});
 	</script>
 </head>
 <body>
 	<h1>Test Chat</h1>
-	<h3>my id:<span class="myid">-</span></h3>
+	<h3>My id:<span class="myid">-</span>, Active<span class="active">-</span></h3>
 	<form id="form" action="">
 		Name:<input type="text" class="name">
 		<input type="text" class="inputbox">
